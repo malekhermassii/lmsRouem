@@ -111,7 +111,7 @@ exports.UpdateAdmin = (req , res)=>{
     .then((admin)=>{
         if(!admin){
             return res.status(404).send({
-                message : "admin not found with this id"+ req.params.adminId
+                message : "admin not found with this id "+ req.params.adminId
             })
         }
         res.send(admin)

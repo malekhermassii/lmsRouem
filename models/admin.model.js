@@ -1,5 +1,5 @@
 const mongoose = require("mongoose")
-const AdminSchema = mongoose.Schema({
+const AdminSchema =new  mongoose.Schema({
     username :{
         type : String , 
         unique :[ true , "the admin name should be unique" ]
@@ -18,3 +18,9 @@ const AdminSchema = mongoose.Schema({
 module.exports = mongoose.model("Admin" , AdminSchema)
 // input : string
 // timestamps : creation , update 
+
+
+
+
+
+

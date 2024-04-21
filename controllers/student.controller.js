@@ -2,51 +2,40 @@ const Student = require("../models/student.model");
 const bcrypt = require("bcryptjs");
 
 // Create a new student
-exports.createStudent = (req, res) => {
-    if (!req.body.email || !req.body.password) {
-        return res.status(400).send({
-            message: "Email and password are required"
-        });
-    }
-    Student.findOne({ email: req.body.email }, (error, studentExist) => {
-        if (error) {
-            console.log(error);
-            return res.status(500).json({ message: "Server Error" });
-        }
-        if (studentExist) {
-            return res.status(400).json({ message: "A student with the same email already exists" });
-        }
-        bcrypt.genSalt(10, (error, salt) => {
-            if (error) {
-                console.log(error);
-                return res.status(500).json({ message: "Server Error" });
-            }
-            bcrypt.hash(req.body.password, salt, (error, hash) => {
-                if (error) {
-                    console.log(error);
-                    return res.status(500).json({ message: "Server Error" });
-                }
-                const student = new Student({
-                    name: req.body.name,
-                    email: req.body.email,
-                    password: hash,
-                    image : req.file ? req.file.filename : null,
-                    isVerified : req.body.isVerified , 
-                    courses: req.body.courses,
-                });
-                student.save()
-                    .then((data) => {
-                        res.send(data);
-                    })
-                    .catch((error) => {
-                        res.status(500).send({
-                            message: error.message || "Server side error"
-                        });
-                    });
+exports.createStudent = async (req, res) => {
+    try {
+        if (!req.body.email || !req.body.password) {
+            return res.status(400).send({
+                message: "Email and password are required"
             });
+        }
+
+        const studentExist = await Student.findOne({ email: req.body.email });
+
+        if (studentExist) {
+            return res.status(400).json({ message: "Already have an student with the same email" });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(req.body.password, salt);
+
+        const student = new Student({
+            name: req.body.name,
+            email: req.body.email,
+            image: req.body.image,
+            isVerified: req.body.isVerified,
+            courses: req.body.courses,
+            password: hash
         });
-    });
+
+        const savedStudent = await student.save();
+        res.send(savedStudent);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server Error" });
+    }
 };
+
 
 // Login
 exports.login = (req, res) => {
@@ -118,8 +107,8 @@ exports.updateStudent = (req, res) => {
     {
         name: req.body.name,
         email: req.body.email,
-        password: hash,
-        image : req.file ? req.file.filename : null,
+        password: req.body.password,
+        image : req.body.image,
         isVerified : req.body.isVerified , 
         courses: req.body.courses,
     }, 
