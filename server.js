@@ -1,5 +1,7 @@
+// to import the env
+require("dotenv").config()
 // Import necessary modules
-const express = require("express");
+const express= require("express")
 const app = express();
 const port = 3002;
 const session = require("express-session");
@@ -7,9 +9,10 @@ const config = require("./config");
 const mongoose = require("mongoose");
 const cors = require("cors") 
 const bodyParser = require("body-parser")
-const multer = require("multer");
+const multer = require("multer"); 
 const path = require("path")
 const Student = require("./models/student.model");
+const Course = require("./models/course.model");
 // storage setting up
 const imageStorage = multer.diskStorage({
     destination:"./public/images",
@@ -58,7 +61,7 @@ const uploadVideo = multer({
         }
     }
 })
-app.post('/student/image' , (req , res)=>{
+app.post('/student' , (req , res)=>{
     uploadImage(req, res , function (error){
         if(error){
             console.error(error);
@@ -85,14 +88,54 @@ app.post('/student/image' , (req , res)=>{
         })
     })
 })
+app.post("/courses" , (req, res)=>{
+    uploadImage(req, res , function (error){
+        if(error){
+            console.error(error);
+            return res.status(400).json({message : error.message})
+        }
+        // couverture
+        const thumbnail = req.file ; 
+        if(!thumbnail){
+            return res.status(400).json({message : "no thumbnail image uploaded"})
+        }  
+        uploadVideo(req, res, async function (){
+            if(error){
+                console.error(error);
+                return res.status(400).json({message : error.message})
+            }
+            const videos = req.files ; 
+            if(!videos){
+                return res.status(400).json({message : "no video image uploaded"})
+            }
+            try{
+                const courseData={
+                    name: req.body.name ,
+                    description : req.body.description ,
+                    topic : req.body.topic ,
+                    price : req.body.price,
+                    thumbnail :thumbnail.filename,
+                    videos : videos.map(video => ({videoUrl : video.filename})), //we gonna chnage it 
+                    // thumbnail = couverture
+                         
+                }
+                const newCourse = await Course.create(courseData);
+                res.status(200).json(newCourse)
+            }catch(error){
+                res.status(500).json({message:"serer error while creatin the course"})
+            }
+         
+        }) 
+    })
 
+})
 app.use(cors())
 app.use(bodyParser.json({limit :" 100mb"}))
 app.use(bodyParser.urlencoded({limit :"100mb" , extended :true }))
 app.use(bodyParser.json())
 // Session configuration
 app.use(session({
-    secret: '123456789',
+    secret: process.env.SESSION_SECRE,
     resave: false,
     saveUninitialized: false
 }));
@@ -114,8 +157,9 @@ require("./routes/admin.route")(app)
 require("./routes/course.route")(app)
 require("./routes/feedback.route")(app)
 require("./routes/student.route")(app)
+require("./routes/enrollment.route")(app)
 // Database connection
-mongoose.connect(config.mongoURI )
+mongoose.connect(process.env.mongoURI )
 .then(()=>{
     console.log("successfully connect to mongodb")
 })

@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const emailRegexPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const studentSchema = new mongoose.Schema({
     name: {
         type: String,

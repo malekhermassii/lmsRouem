@@ -15,14 +15,17 @@
          if (adminExist) {
              return res.status(400).json({ message: "Already have an admin with the same email" });
          }
- 
-         const salt = await bcrypt.genSalt(10);
+         const countAdmins = await Admin.countDocuments();
+        //  si countAdmins === 0 donc the role gonna be "super-admin" sinon "admin"
+         const role = countAdmins === 0 ? "super-admin" : "admin"
+         const salt = await bcrypt.genSalt(10) 
          const hash = await bcrypt.hash(req.body.password, salt);
  
          const admin = new Admin({
              username: req.body.username,
              email: req.body.email,
-             password: hash
+             password: hash,
+             role : role,
          });
  
          const savedAdmin = await admin.save();
