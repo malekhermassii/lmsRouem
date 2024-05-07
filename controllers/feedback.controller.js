@@ -1,23 +1,23 @@
 const Feedback = require("../models/feedback.model");
-const Student = require("../models/student.model"); // Assuming this exists
+const User = require("../models/user.model"); // Assuming this exists
 const Course = require("../models/course.model"); // Assuming this exists
 
 // Create and Save a new Feedback
 exports.createFeedback = async (req, res) => {
     try {
-        // Find the student and course from the database
-        const student = await Student.findOne({name :req.body.student});
+        // Find the user and course from the database
+        const user = await User.findOne({name :req.body.user});
         const course = await Course.findOne({name :req.body.course});
 
-        if (!student || !course) {
+        if (!user || !course) {
             return res.status(404).send({
-                message: "Student or Course not found with provided ",
+                message: "User or Course not found with provided ",
             });
         }
 
         // Create a Feedback
         const newFeedback = new Feedback({
-            student: student,
+            user: user,
             course: course,
             content: req.body.content,
             rating: req.body.rating,
@@ -34,7 +34,7 @@ exports.createFeedback = async (req, res) => {
 // Retrieve all Feedbacks from the database.
 exports.findAll = async (req, res) => {
     try {
-        const feedbacks = await Feedback.find().populate('student').populate('course');
+        const feedbacks = await Feedback.find().populate('user').populate('course');
         res.send(feedbacks);
     } catch (err) {
         res.status(500).send({
@@ -45,7 +45,7 @@ exports.findAll = async (req, res) => {
 // Find a single Feedback with a feedbackId
 exports.findOne = async (req, res) => {
     try {
-        const feedback = await Feedback.findById(req.params.feedbackId).populate('student').populate('course');
+        const feedback = await Feedback.findById(req.params.feedbackId).populate('user').populate('course');
         if (!feedback) {
             return res.status(404).send({
                 message: "Feedback not found with id " + req.params.feedbackId
@@ -153,7 +153,7 @@ exports.deleteFeedback = async (req, res) => {
 // exports.createfeedback = (req, res) => {
     
 //     const newFeedback = new feedback({
-//         student: req.body.student,
+//         user: req.body.user,
 //         // course
 //         content: req.body.content,
 //         rating: req.body.rating,
@@ -199,7 +199,7 @@ exports.deleteFeedback = async (req, res) => {
 // }
 // exports.Updatefeedback = (req, res) => {
 //     feedback.findByIdAndUpdate(req.params.feedbackId, {
-//         student: req.body.student,
+//         user: req.body.user,
 //         content: req.body.content,
 //         rating: req.body.rating,
 //     },

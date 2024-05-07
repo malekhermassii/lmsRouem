@@ -1,22 +1,29 @@
 const Course = require("../models/course.model")
-exports.createCourse = async (req , res)=>{
-    try{
-        const course = new Course({
-            name: req.body.name ,
-            description : req.body.description ,
-            topic : req.body.topic ,
-            price : req.body.price,
-            videos : req.body.videos, //we gonna chnage it 
-            // thumbnail = couverture
-            thumbnail : req.body.thumbnail,      
-        })
-        await course.save()
-        res.status(201).json(course)
+
+// Controller method for creating a course with files already handled
+exports.createCourse = async (req, res) => {
+    try {
+        const { name, description, topic, price } = req.body;
+        const thumbnail = req.file.filename;  // Assuming thumbnail image is required and uploaded
+        const videos = req.files.map(file => ({ videoUrl: file.filename })); // Assuming videos are uploaded
+        
+        const courseData = {
+            name,
+            description,
+            topic,
+            price,
+            thumbnail,
+            videos,
+        };
+
+        const course = new Course(courseData);
+        await course.save();
+        res.status(201).json(course);
+    } catch (error) {
+        res.status(400).json({ message: "Error while creating the course", error: error.message });
     }
-    catch (error){
-        res.status(400).json({message : "error while creating the course"})
-    }
-}
+};
+
 // display all courses 
 exports.findAllCourse = (req , res)=>{
     // find
@@ -147,3 +154,28 @@ exports.deleteVideo = async (req, res)=>{
     }
 
 }
+
+
+
+
+
+
+
+// exports.createCourse = async (req , res)=>{
+    //     try{
+    //         const course = new Course({
+    //             name: req.body.name ,
+    //             description : req.body.description ,
+    //             topic : req.body.topic ,
+    //             price : req.body.price,
+    //             videos : req.body.videos, //we gonna chnage it 
+    //             // thumbnail = couverture
+    //             thumbnail : req.body.thumbnail,      
+    //         })
+    //         await course.save()
+    //         res.status(201).json(course)
+    //     }
+    //     catch (error){
+    //         res.status(400).json({message : "error while creating the course"})
+    //     }
+    // }

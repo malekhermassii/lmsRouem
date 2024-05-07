@@ -3,11 +3,11 @@ module.exports = (app)=>{
     const authorizeRoles = require("../middleware/authorizeRoles")
     // admin routes
     // create(post) , affichage(all , one)(get) , update(put) , delete(delete)
-    app.post("/admins" ,authorizeRoles("super-admin"), admins.createAdmin )
-    app.get("/admins" ,authorizeRoles("super-admin"), admins.findAll)
-    app.get("/admins/:adminId" ,authorizeRoles("super-admin"), admins.findOne)
-    app.put("/admins/:adminId" ,authorizeRoles("super-admin"), admins.UpdateAdmin)
-    app.delete("/admins/:adminId",authorizeRoles("super-admin"), admins.DeleteAdmin)
-    app.post("/login" , admins.login)
-    app.get("/logout" , admins.logout)
+    app.post("/admins" ,authorizeRoles("admin"), admins.createAdmin )
+    app.get("/admins" ,authorizeRoles("admin"), admins.findAll)
+    app.get("/admins/:adminId" ,authorizeRoles("admin"), admins.findOne)
+    app.put("/admins/:adminId" ,authorizeRoles("admin"), admins.UpdateAdmin)
+    app.delete("/admins/:adminId",authorizeRoles("admin"), admins.DeleteAdmin)
+    app.post("/loginAdmin" , admins.login)
+    app.get("/logoutAdmin" , admins.logout)
 }

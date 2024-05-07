@@ -1,9 +1,9 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 const feedbackSchema = new Schema ({
-    student: {
+    user: {
         type: mongoose.Schema.Types.ObjectId ,
-        ref : "Student"
+        ref : "User"
     },
     course: {
         type: mongoose.Schema.Types.ObjectId ,

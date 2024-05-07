@@ -11,131 +11,15 @@ const cors = require("cors")
 const bodyParser = require("body-parser")
 const multer = require("multer"); 
 const path = require("path")
-const Student = require("./models/student.model");
+const User = require("./controllers/user.controller");
 const Course = require("./models/course.model");
-// storage setting up
-const imageStorage = multer.diskStorage({
-    destination:"./public/images",
-    filename:(req , file , cb)=>{
-        cb(null , Date.now() + path.extname(file.originalname))
-    }
-})
-// rouem.png(12:30:21 2024/01/01())
-const videoStorage = multer.diskStorage({
-    destination:"./public/videos",
-    filename:(req , file , cb)=>{
-        cb(null , Date.now() + path.extname(file.originalname))
-    }
-})
-const uploadImage = multer({
-    storage: imageStorage,
-    fileFilter:(req, file , cb)=>{
-        // jpeg , jpg , png , gif
-        if(
-            file.mimetype =="image/jpeg"||
-            file.mimetype =="image/jpg"||
-            file.mimetype =="image/png"||
-            file.mimetype =="image/gif"
-
-        ){
-            cb(null , true)
-        }
-        else{
-            cb(new Error("only jpeg , jpg , png and gif images are allowed"))
-        }
-    }
-})
-const uploadVideo = multer({
-    storage: videoStorage,
-    fileFilter:(req, file , cb)=>{
-        // jpeg , jpg , png , gif
-        if(
-            file.mimetype =="image/mp4"||
-            file.mimetype =="image/quicktime"||
-            file.mimetype =="image/x-msvideo"
-        ){
-            cb(null , true)
-        }
-        else{
-            cb(new Error("only mp4 , mov , avi videos are allowed"))
-        }
-    }
-})
-app.post('/student' , (req , res)=>{
-    uploadImage(req, res , function (error){
-        if(error){
-            console.error(error);
-            return res.status(400).json({message : error.message})
-        }
-        const file = req.file ; 
-        if(!file){
-            return res.status(400).json({message : "no file uploaded"})
-        }
-        const data = {
-            image : file.filename,
-            name: req.body.name,
-            email: req.body.email,
-            password: req.body.password,
-            isVerified : req.body.isVerified , 
-            courses: req.body.courses,
-        };
-        Student.create(data)
-        .then((done)=>{
-            res.redirect("/students")
-        })
-        .catch((error)=>{
-            res.status(500).json({message : "error while adding the student image"})
-        })
-    })
-})
-app.post("/courses" , (req, res)=>{
-    uploadImage(req, res , function (error){
-        if(error){
-            console.error(error);
-            return res.status(400).json({message : error.message})
-        }
-        // couverture
-        const thumbnail = req.file ; 
-        if(!thumbnail){
-            return res.status(400).json({message : "no thumbnail image uploaded"})
-        }  
-        uploadVideo(req, res, async function (){
-            if(error){
-                console.error(error);
-                return res.status(400).json({message : error.message})
-            }
-            const videos = req.files ; 
-            if(!videos){
-                return res.status(400).json({message : "no video image uploaded"})
-            }
-            try{
-                const courseData={
-                    name: req.body.name ,
-                    description : req.body.description ,
-                    topic : req.body.topic ,
-                    price : req.body.price,
-                    thumbnail :thumbnail.filename,
-                    videos : videos.map(video => ({videoUrl : video.filename})), //we gonna chnage it 
-                    // thumbnail = couverture
-                         
-                }
-                const newCourse = await Course.create(courseData);
-                res.status(200).json(newCourse)
-            }catch(error){
-                res.status(500).json({message:"serer error while creatin the course"})
-            }
-         
-        }) 
-    })
-
-})
 app.use(cors())
 app.use(bodyParser.json({limit :" 100mb"}))
 app.use(bodyParser.urlencoded({limit :"100mb" , extended :true }))
 app.use(bodyParser.json())
 // Session configuration
 app.use(session({
-    secret: process.env.SESSION_SECRE,
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false
 }));
@@ -144,6 +28,74 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Internal Server Error' });
 });
+
+// storage setting up
+// const imageStorage = multer.diskStorage({
+//     destination:"./public/images",
+//     filename:(req , file , cb)=>{
+//         cb(null , Date.now() + path.extname(file.originalname))
+//     }
+// })
+// Storage configuration for images
+const imageStorage = multer.diskStorage({
+    destination: "./public/images", // Make sure this directory exists
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname)); // Prefixing with timestamp to avoid name conflicts
+    }
+});
+// rouem.png(12:30:21 2024/01/01())
+const videoStorage = multer.diskStorage({
+    destination:"./public/videos",
+    filename:(req , file , cb)=>{
+        cb(null , Date.now() + path.extname(file.originalname))
+    }
+})
+
+// Multer configuration for handling image file uploads
+const uploadImage = multer({
+    storage: imageStorage,
+    fileFilter: (req, file, cb) => {
+        if (["image/jpeg", "image/jpg", "image/png", "image/gif"].includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error("Only JPEG, JPG, PNG, and GIF images are allowed!"), false);
+        }
+    }
+});
+const uploadVideo = multer({
+    storage: videoStorage,
+    fileFilter:(req, file , cb)=>{
+        // jpeg , jpg , png , gif
+        if(
+            file.mimetype == "video/mp4" ||
+            file.mimetype == "video/quicktime" ||
+            file.mimetype == "video/x-msvideo"
+        ){
+            cb(null , true)
+        }
+        else{
+            cb(new Error("only mp4 , mov , avi videos are allowed"))
+        }
+    }
+})
+// POST route for creating a new user
+app.post('/users', uploadImage.single('image'), User.createUser);
+const uploadImages = multer({ storage: imageStorage }); 
+const uploadVideos = multer({ storage: videoStorage }); 
+
+app.post('/courses', uploadImages.single('thumbnail'), uploadVideos.array('videos', 5), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: "No thumbnail image uploaded" });
+    }
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ message: "No video files uploaded" });
+    }
+
+    // Delegate to controller
+    controller.createCourse(req, res);
+});
+
+
 
 
 app.post("/logout" , (req, res)=>{
@@ -156,7 +108,7 @@ app.post("/logout" , (req, res)=>{
 require("./routes/admin.route")(app)
 require("./routes/course.route")(app)
 require("./routes/feedback.route")(app)
-require("./routes/student.route")(app)
+require("./routes/user.route")(app)
 require("./routes/enrollment.route")(app)
 // Database connection
 mongoose.connect(process.env.mongoURI )
@@ -185,3 +137,48 @@ app.listen(port , ()=> {
 
 
 
+// const uploadImage = multer({
+//     storage: imageStorage,
+//     fileFilter:(req, file , cb)=>{
+//         // jpeg , jpg , png , gif
+//         if(
+//             file.mimetype =="image/jpeg"||
+//             file.mimetype =="image/jpg"||
+//             file.mimetype =="image/png"||
+//             file.mimetype =="image/gif"
+
+//         ){
+//             cb(null , true)
+//         }
+//         else{
+//             cb(new Error("only jpeg , jpg , png and gif images are allowed"))
+//         }
+//     }
+// })
+// app.post('/user' , (req , res)=>{
+//     uploadImage(req, res , function (error){
+//         if(error){
+//             console.error(error);
+//             return res.status(400).json({message : error.message})
+//         }
+//         const file = req.file ; 
+//         if(!file){
+//             return res.status(400).json({message : "no file uploaded"})
+//         }
+//         const data = {
+//             image : file.filename,
+//             name: req.body.name,
+//             email: req.body.email,
+//             password: req.body.password,
+//             isVerified : req.body.isVerified , 
+//             courses: req.body.courses,
+//         };
+//         User.create(data)
+//         .then((done)=>{
+//             res.redirect("/users")
+//         })
+//         .catch((error)=>{
+//             res.status(500).json({message : "error while adding the user image"})
+//         })
+//     })
+// })

@@ -17,7 +17,7 @@
          }
          const countAdmins = await Admin.countDocuments();
         //  si countAdmins === 0 donc the role gonna be "super-admin" sinon "admin"
-         const role = countAdmins === 0 ? "super-admin" : "admin"
+         const role = countAdmins === 0 ? "admin" : "teacher"
          const salt = await bcrypt.genSalt(10) 
          const hash = await bcrypt.hash(req.body.password, salt);
  

@@ -1,3 +1,4 @@
+// to import the env
 require("dotenv").config()
 // Import necessary modules
 const express= require("express")
@@ -11,6 +12,22 @@ const bodyParser = require("body-parser")
 const multer = require("multer"); 
 const path = require("path")
 const Student = require("./models/student.model");
+app.use(cors())
+app.use(bodyParser.json({limit :" 100mb"}))
+app.use(bodyParser.urlencoded({limit :"100mb" , extended :true }))
+app.use(bodyParser.json())
+// Session configuration
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false
+}));
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Internal Server Error' });
+});
+
 // storage setting up
 const imageStorage = multer.diskStorage({
     destination:"./public/images",
@@ -18,6 +35,7 @@ const imageStorage = multer.diskStorage({
         cb(null , Date.now() + path.extname(file.originalname))
     }
 })
+// rouem.png(12:30:21 2024/01/01())
 
 const uploadImage = multer({
     storage: imageStorage,
@@ -66,21 +84,7 @@ app.post('/student' , (req , res)=>{
     })
 })
 
-app.use(cors())
-app.use(bodyParser.json({limit :" 100mb"}))
-app.use(bodyParser.urlencoded({limit :"100mb" , extended :true }))
-app.use(bodyParser.json())
-// Session configuration
-app.use(session({
-    secret: '123456789',
-    resave: false,
-    saveUninitialized: false
-}));
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Internal Server Error' });
-});
+
 
 
 app.post("/logout" , (req, res)=>{
@@ -110,3 +114,12 @@ app.get('/' , (req , res)=> {
 app.listen(port , ()=> {
     console.log(`our app is working on port ${port}`)
 });
+
+
+
+
+
+
+
+
+
