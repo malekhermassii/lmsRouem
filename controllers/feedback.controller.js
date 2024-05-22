@@ -1,13 +1,13 @@
 const Feedback = require("../models/feedback.model");
-const User = require("../models/user.model"); // Assuming this exists
-const Course = require("../models/course.model"); // Assuming this exists
+const User = require("../models/user.model");
+const Course = require("../models/course.model");
 
 // Create and Save a new Feedback
 exports.createFeedback = async (req, res) => {
     try {
         // Find the user and course from the database
-        const user = await User.findOne({name :req.body.user});
-        const course = await Course.findOne({name :req.body.course});
+        const user = await User.findOne({ name: req.body.user });
+        const course = await Course.findOne({ name: req.body.course });
 
         if (!user || !course) {
             return res.status(404).send({
@@ -31,6 +31,7 @@ exports.createFeedback = async (req, res) => {
         });
     }
 };
+
 // Retrieve all Feedbacks from the database.
 exports.findAll = async (req, res) => {
     try {
@@ -42,6 +43,19 @@ exports.findAll = async (req, res) => {
         });
     }
 };
+
+// Find feedbacks for a specific course by course ID
+exports.findFeedbacksByCourseId = async (req, res) => {
+    try {
+        const feedbacks = await Feedback.find({ course: req.params.courseId }).populate('user').populate('course');
+        res.send(feedbacks);
+    } catch (err) {
+        res.status(500).send({
+            message: err.message || "Some error occurred while retrieving feedbacks for the course."
+        });
+    }
+};
+
 // Find a single Feedback with a feedbackId
 exports.findOne = async (req, res) => {
     try {
@@ -97,143 +111,21 @@ exports.updateFeedback = async (req, res) => {
 };
 
 // Delete a Feedback with the specified feedbackId in the request
-exports.deleteFeedback = async (req, res) => {
-    try {
-        const feedback = await Feedback.findByIdAndRemove(req.params.feedbackId);
-        if (!feedback) {
+exports.DeleteFeedback = (req , res)=>{
+    Feedback.findByIdAndDelete(req.params.feedbackId)
+    .then((feedback)=>{
+        if(!feedback){
             return res.status(404).send({
-                message: "Feedback not found with id " + req.params.feedbackId
-            });
+                message : " feedback not found with this id" + req.params.feedbackId
+            })
         }
-        res.send({ message: "Feedback deleted successfully!" });
-    } catch (err) {
-        if (err.kind === 'ObjectId' || err.name === 'NotFound') {
-            return res.status(404).send({
-                message: "Feedback not found with id " + req.params.feedbackId
-            });
-        }
+        res.send({ 
+            message : "feedback deleted successfully"
+        })
+    })
+    .catch((error)=>{
         res.status(500).send({
-            message: "Could not delete feedback with id " + req.params.feedbackId
-        });
-    }
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// const feedback = require('../models/feedback.model')
-// exports.createfeedback = (req, res) => {
-    
-//     const newFeedback = new feedback({
-//         user: req.body.user,
-//         // course
-//         content: req.body.content,
-//         rating: req.body.rating,
-//     })
-//     newFeedback.save()
-//         .then((data) => {
-//             res.send(data)
-//         })
-//         .catch((error) => {
-//             res.status(500).send({
-//                 message: error.message || "Server side error"
-//             })
-//         })
-// }
-
-// exports.findAll = (req, res) => {
-//     feedback.find()
-//         .then((feedbacks) => {
-//             res.send(feedbacks)
-//         })
-//         .catch((error) => {
-//             res.status(500).send({
-//                 message: error.message || "Server side error"
-//             })
-//         })
-// }
-// //findebyId
-// exports.findOne = (req, res) => {
-//     feedback.findById(req.params.feedbackId)
-//         .then((feedback) => {
-//             if (!feedback) {
-//                 return res.status(404).send({
-//                     message: "feedback not found with this id: " + req.params.feedbackd
-//                 })
-//             }
-//             res.send(feedback);
-//         })
-//         .catch((error) => {
-//             res.status(500).send({
-//                 message: "Error retrieving feedback with id: " + req.params.feedbackId
-//             })
-//         })
-// }
-// exports.Updatefeedback = (req, res) => {
-//     feedback.findByIdAndUpdate(req.params.feedbackId, {
-//         user: req.body.user,
-//         content: req.body.content,
-//         rating: req.body.rating,
-//     },
-//         { new: true })
-//         .then(feedback => {
-//             if (!feedback) {
-//                 return res.status(404).send({
-//                     message: "Feedback not found with this id " + req.params.feedbackId
-//                 })
-//             }
-//             res.send(feedback)
-//         })
-//         .catch(error => {
-//             res.status(500).send({
-//                 message: "Feedback not found with this id " + req.params.feedbackId
-//             })
-//         })
-// }
-// exports.deletefeedback = (req, res) => {
-//     feedback.findByIdAnddelete(req.param.feedbackid)
-//         .then(feedback => {
-//             if (!feedback) {
-//                 return res.status(404).send({
-//                     message: "Feedback not found with this id " + req.params.feedbackId
-//                 })
-//             }
-//             res.send({
-//                 message: "feedback successfully"
-//             })
-//         })
-//         .catch(error => {
-//             res.status(500).send({
-//                 message: error.message || "Server side error"
-//             })
-//         })
-// }
-// // ahmed ( bad exerience )
+            message: error.message || "server side error"
+        })
+    })
+}

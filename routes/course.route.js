@@ -8,7 +8,7 @@ module.exports = (app)=>{
     app.put("/courses/:courseId" , courses.updateCourse)
     app.delete("/courses/:courseId", courses.DeleteCourse)
     // videos routes
-    // create , update , delete
+    // create , update , deletex
     // html
     app.post("/courses/:courseId/videos" , courses.createVideo)
     app.put("/courses/:courseId/videos/videoId" , courses.updateVideo)

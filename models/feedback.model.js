@@ -10,6 +10,9 @@ const feedbackSchema = new Schema ({
         ref : "Course"
        
     },
+    test: {
+        type: Schema.Types.ObjectId, 
+        ref: 'Test' },
     content: {
         type: String,
       

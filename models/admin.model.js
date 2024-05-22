@@ -1,6 +1,6 @@
 const mongoose = require("mongoose")
 const AdminSchema =new  mongoose.Schema({
-    username :{
+    adminName :{
         type : String , 
         unique :[ true , "the admin name should be unique" ]
     }, 
@@ -9,11 +9,15 @@ const AdminSchema =new  mongoose.Schema({
         unique : [ true , "the email should be unique"]
     },
     password : {
-        type : String
+        type : String 
     },
     role:{
         type:String,
         default : "teacher"
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
     }
 } , 
 {

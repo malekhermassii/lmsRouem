@@ -1,5 +1,6 @@
 const User = require("../models/user.model");
 const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken');
 
 // Create a new user
 exports.createUser = async (req, res) => {
@@ -20,7 +21,7 @@ exports.createUser = async (req, res) => {
             name: req.body.name,
             email: req.body.email,
             image: req.file ? req.file.filename : null, // Using ternary to handle cases where no file is uploaded
-            isVerified: req.body.isVerified,
+            // isVerified: req.body.isVerified,
             courses: req.body.courses,
             password: hash
         });
@@ -32,23 +33,32 @@ exports.createUser = async (req, res) => {
         res.status(500).json({ message: "Server Error" });
     }
 };
-
-// Login
 exports.login = async (req, res) => {
     const { email, password } = req.body;
-
     try {
-        // Use await to handle the Promise returned by findOne()
         const user = await User.findOne({ email });
-
         if (!user) {
             return res.status(404).json({ message: "User not found with this email" });
         }
-
-        // Use bcrypt to compare the password
         const isMatched = await bcrypt.compare(password, user.password);
         if (isMatched) {
-            return res.status(200).json({ message: "Authentication successful" });
+            // Check if the user is already verified
+            if (!user.isVerified) {
+                user.isVerified = true;
+                await user.save();
+            }
+            // 
+            // Create a token()
+            const token = jwt.sign(
+                { userId: user._id, email: user.email },
+                process.env.JWT_SECRET, 
+                { expiresIn: '24h' } // Token expires in 24 hour
+            );
+            return res.status(200).json({
+                message: "Authentication successful",
+                user,
+                token
+            });
         } else {
             return res.status(401).json({ message: "Failed authentication" });
         }
@@ -66,8 +76,6 @@ exports.logout = (req , res)=>{
             console.log("logout failed" , error);
             return res.status(500).json({ message: "Logout failed" });
         }
-        // Don't send any response here, since the session is destroyed
-        // You can optionally log a message indicating successful logout
         return res.status(200).json({ message: "Logout successful" });
         console.log("Logout successful");
     });
@@ -104,21 +112,17 @@ exports.findOne = (req, res) => {
 };
 
 // Update user
-exports.updateUser = (req, res) => {
-    User.findByIdAndUpdate(req.params.userId,
-    {
-        name: req.body.name,
-        email: req.body.email,
-        password: req.body.password,
-        image : req.body.image,
-        isVerified : req.body.isVerified , 
-        courses: req.body.courses,
-    }, 
-    { new: true })
+exports.updateUser = async (req, res) => {
+    const { name, email, image } = req.body;
+    User.findByIdAndUpdate(req.params.userId, {
+        name: name,
+        email: email,
+        image: image
+    }, { new: true })
         .then((user) => {
             if (!user) {
                 return res.status(404).send({
-                    message: "User not found with this id" + req.params.userId
+                    message: "User not found with this id " + req.params.userId
                 });
             }
             res.send(user);
@@ -129,6 +133,7 @@ exports.updateUser = (req, res) => {
             });
         });
 };
+
 
 // Delete user
 exports.deleteUser = (req, res) => {

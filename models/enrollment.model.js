@@ -17,9 +17,12 @@ const EnrollmentSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        default: 'active'
+        default: 'active',  // Assuming 'active' means currently enrolled
+        enum: ['active', 'completed', 'cancelled']  // Example statuses
     }
+}, {
+    timestamps: true  // This adds `createdAt` and `updatedAt` fields automatically
 });
 
-module.exports  = mongoose.model('Enrollment', EnrollmentSchema);
-
+const Enrollment = mongoose.model('Enrollment', EnrollmentSchema);
+module.exports = Enrollment;

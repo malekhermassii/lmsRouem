@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const studentSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, "please enter your name"]
@@ -14,16 +14,14 @@ const studentSchema = new mongoose.Schema({
         minlength: [6, "password must contain at least 6 characters"]
     },
     image: {
-        type : String ,
-        default : null
+        type: String,
+        default: null
     },
     isVerified: {
         type: Boolean,
         default: false
-    },
-    courses: [{
-        courseId: String
-    }]
+    }
 }, { timestamps: true });
 
-module.exports  = mongoose.model("User", studentSchema);
+
+module.exports  = mongoose.model("User", userSchema);

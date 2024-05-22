@@ -1,29 +1,30 @@
-const Course = require("../models/course.model")
+const Course = require("../models/course.model");
 
-// Controller method for creating a course with files already handled
 exports.createCourse = async (req, res) => {
     try {
         const { name, description, topic, price } = req.body;
-        const thumbnail = req.file.filename;  // Assuming thumbnail image is required and uploaded
-        const videos = req.files.map(file => ({ videoUrl: file.filename })); // Assuming videos are uploaded
-        
+        const image = req.files['image'][0] ? req.files['image'][0].filename : null;
+
+        // Extract filenames from video files
+        const videos = req.files['videos'].map(file => ({ videoURL: file.filename })); // Update property name to videoURL
+
         const courseData = {
             name,
             description,
             topic,
             price,
-            thumbnail,
-            videos,
+            image,
+            videos, // Store filenames instead of IDs
         };
 
         const course = new Course(courseData);
         await course.save();
         res.status(201).json(course);
+        console.log(course);
     } catch (error) {
         res.status(400).json({ message: "Error while creating the course", error: error.message });
     }
 };
-
 // display all courses 
 exports.findAllCourse = (req , res)=>{
     // find
@@ -54,30 +55,33 @@ exports.findOneCourse = (req , res)=>{
         })
     })
 }
-exports.updateCourse = async (req, res)=>{
-    Course.findByIdAndUpdate(req.params.courseId , {
-        name: req.body.name ,
-        description : req.body.description ,
-        topic : req.body.topic ,
-        price : req.body.price,
-        videos : req.body.videos, //we gonna chnage it 
-        thumbnail : req.body.thumbnail, 
-    } , 
-    { new : true})
-    .then((course)=>{
-        if(!course){
-            return res.status(404).send({
-                message : "course not found with this id"+ req.params.courseId
-            })
+exports.updateCourse = async (req, res) => {
+    try {
+        const courseId = req.params.courseId;
+        const { name, description, topic, price } = req.body;
+        const image = req.files && req.files['image'] ? req.files['image'][0].filename : null;
+        const videos = req.files && req.files['videos'] ? req.files['videos'].map(file => ({ videoURL: file.filename })) : null;
+
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return res.status(404).json({ message: "Course not found" });
         }
-        res.send(course)
-    })
-    .catch((error)=>{
-        res.status(500).send({
-            message: error.message || "server side error"
-        })
-    })
-}
+
+        // Update course details
+        if (name) course.name = name;
+        if (description) course.description = description;
+        if (topic) course.topic = topic;
+        if (price) course.price = price;
+        if (image) course.image = image;
+        if (videos) course.videos = videos; // Overwrites existing videos
+
+        await course.save();
+        res.status(200).json(course);
+    } catch (error) {
+        console.error("Error while updating the course:", error);
+        res.status(400).json({ message: "Error while updating the course", error: error.message });
+    }
+};
 exports.DeleteCourse = (req , res)=>{
     Course.findByIdAndDelete(req.params.courseId)
     .then((course)=>{
@@ -96,23 +100,21 @@ exports.DeleteCourse = (req , res)=>{
         })
     })
 }
-exports.createVideo = async (req , res)=>{
-    const courseId = req.params.courseId
-    const {title , description , videoURL} = req.body
-    try{
-       const course = await Course.findById(courseId)
-       if(!course){
-        return res.status(404).json({message : "course not found"})
-       }
-    // push = to element to the array
-       course.videos.push({title , description , videoURL})
-       await course.save()
-       res.status(201).json(course)
+exports.createVideo = async (req, res) => {
+    const courseId = req.params.courseId;
+    const { title, description, videoURL } = req.body; // Ensure property name matches with frontend
+    try {
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return res.status(404).json({ message: "Course not found" });
+        }
+        course.videos.push({ title, description, videoURL });
+        await course.save();
+        res.status(201).json(course);
+    } catch (error) {
+        res.status(400).json({ message: "Error while creating the video" });
     }
-    catch (error){
-        res.status(400).json({message : "error while creating the video"})
-    }
-}
+};
 exports.updateVideo = async (req , res)=>{
     // courseId , videoId
     const courseId = req.params.courseId ; 
@@ -169,8 +171,8 @@ exports.deleteVideo = async (req, res)=>{
     //             topic : req.body.topic ,
     //             price : req.body.price,
     //             videos : req.body.videos, //we gonna chnage it 
-    //             // thumbnail = couverture
-    //             thumbnail : req.body.thumbnail,      
+    //             // image = couverture
+    //             image : req.body.image,      
     //         })
     //         await course.save()
     //         res.status(201).json(course)
